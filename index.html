@@ -74,15 +74,13 @@ function addScreen(id, html) {
 
 addScreen("consent", `
   <h1>Software Design Preferences Study</h1>
-  <p>Thank you for participating! In this study, you will answer questions about your preferences when planning a software project.</p>
-  <p>The study takes approximately <strong>5 minutes</strong>. Your responses are anonymous and will be used for academic research on how people make software design decisions.</p>
-  <p style="font-size:0.9rem; color:#868e96;">By clicking "Start", you consent to participate. You may exit at any time.</p>
+  <p>Answer questions about your preferences when planning a software project. Takes about <strong>3–4 minutes</strong>.</p>
+  <p style="font-size:0.9rem; color:#868e96;">Responses are anonymous and used for academic research. You may exit at any time.</p>
   <div class="btn-row"><button class="btn" onclick="nextScreen()">Start</button></div>
 `);
 
 addScreen("traits", `
   <h2>About You</h2>
-  <p>Please answer these 5 quick questions about yourself.</p>
 
   <div class="question-block">
     <div class="question-counter">Question 1 of 5</div>
@@ -133,9 +131,9 @@ addScreen("traits", `
 
 let questionsHtml = `
   <h2>Design Preferences</h2>
-  <p>Imagine you are planning to build the following project. Read the description, then answer the design questions below.</p>
+  <p>You're planning to build this project. How would you design it?</p>
   <div class="proposal-box">${proj.proposal}</div>
-  <p class="note">Project: <strong>${proj.label}</strong></p>
+  <p class="note">Skip any question you don't have a preference on.</p>
 `;
 proj.questions.forEach((q, i) => {
   let optsHtml = q.options.map(o => `
@@ -152,15 +150,14 @@ proj.questions.forEach((q, i) => {
   `;
 });
 questionsHtml += `
-  <div id="answers-error" class="error-msg">Please answer all questions before continuing.</div>
-  <div class="btn-row"><button class="btn" onclick="validateAnswers()">Continue</button></div>
+  <div class="btn-row"><button class="btn" onclick="nextScreen()">Continue</button></div>
 `;
 addScreen("questions", questionsHtml);
 
 addScreen("open", `
-  <h2>Final Question</h2>
-  <p>If an AI assistant were helping you plan the <strong>${proj.label}</strong> project, what is the single most important question it should ask you first?</p>
-  <textarea id="open-response" placeholder="Type your answer here..."></textarea>
+  <h2>One Last Thing</h2>
+  <p>If an AI were helping you plan this project, what's the first question it should ask you?</p>
+  <textarea id="open-response" placeholder="Optional"></textarea>
   <div class="btn-row"><button class="btn" onclick="submitStudy()">Submit</button></div>
 `);
 
@@ -209,16 +206,6 @@ function validateTraits() {
   const missing = dims.filter(d => !state.traits[d]);
   const err = document.getElementById("traits-error");
   if (missing.length > 0) {
-    err.style.display = "block";
-    return;
-  }
-  err.style.display = "none";
-  nextScreen();
-}
-
-function validateAnswers() {
-  const err = document.getElementById("answers-error");
-  if (state.answers.length < proj.questions.length) {
     err.style.display = "block";
     return;
   }
