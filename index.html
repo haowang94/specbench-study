@@ -217,7 +217,7 @@ function showFeedback() {
   const personaAns = (PERSONA_ANSWERS[bestPid] || {})[state.project] || {};
   const proj = STUDY_DATA[state.project];
   const candidates = proj.questions.filter(q => personaAns[q.id]);
-  const selected = candidates.slice(0, 3);
+  const selected = candidates.slice(0, 10);
   let html = `<h2>AI Preference Check</h2>
     <p>We asked an AI to role-play a user with similar traits and answer the same design questions. Do you agree with its choices?</p>`;
   selected.forEach((q, i) => {
