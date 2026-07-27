@@ -74,7 +74,7 @@ function addScreen(id, html) {
 
 addScreen("consent", `
   <h1>Software Design Preferences Study</h1>
-  <p>Answer questions about your preferences when planning a software project. Takes about <strong>3–4 minutes</strong>.</p>
+  <p>Answer questions about your preferences when planning a software project. Takes about <strong>5–7 minutes</strong>.</p>
   <p style="font-size:0.9rem; color:#868e96;">Responses are anonymous and used for academic research. You may exit at any time.</p>
   <div class="btn-row"><button class="btn" onclick="nextScreen()">Start</button></div>
 `);
@@ -86,7 +86,7 @@ addScreen("traits", `
     <div class="question-counter">Question 1 of 5</div>
     <h3>Which best describes your experience with building software or digital products?</h3>
     <label class="option" onclick="selectTrait(this,'experience','beginner')"><span class="option-label">I'm new to this / learning</span></label>
-    <label class="option" onclick="selectTrait(this,'experience','junior')"><span class="option-label">I've built a few things but still developing skills</span></label>
+    <label class="option" onclick="selectTrait(this,'experience','junior_engineer')"><span class="option-label">I've built a few things but still developing skills</span></label>
     <label class="option" onclick="selectTrait(this,'experience','pm_founder')"><span class="option-label">I lead product decisions / define what gets built</span></label>
     <label class="option" onclick="selectTrait(this,'experience','senior_engineer')"><span class="option-label">I've shipped and maintained production systems for years</span></label>
     <label class="option" onclick="selectTrait(this,'experience','designer')"><span class="option-label">I focus on how things look and feel for users</span></label>
@@ -120,7 +120,7 @@ addScreen("traits", `
   <div class="question-block">
     <div class="question-counter">Question 5 of 5</div>
     <h3>How do you prefer to work with tools or assistants?</h3>
-    <label class="option" onclick="selectTrait(this,'collaboration','solo_worker')"><span class="option-label">I work best alone, just give me the tools</span></label>
+    <label class="option" onclick="selectTrait(this,'collaboration','solo')"><span class="option-label">I work best alone, just give me the tools</span></label>
     <label class="option" onclick="selectTrait(this,'collaboration','small_group')"><span class="option-label">I like collaborating with a small team or partner</span></label>
     <label class="option" onclick="selectTrait(this,'collaboration','large_group')"><span class="option-label">I'm used to coordinating across many people</span></label>
   </div>
@@ -219,7 +219,8 @@ function showFeedback() {
   const candidates = proj.questions.filter(q => personaAns[q.id]);
   const selected = candidates.slice(0, 10);
   let html = `<h2>AI Preference Check</h2>
-    <p>We asked an AI to role-play a user with similar traits and answer the same design questions. Do you agree with its choices?</p>`;
+    <p>We asked an AI to role-play a user with similar traits and answer the same design questions. Do you agree with its choices?</p>
+    <p class="note">Skip any question you don't have a strong opinion on.</p>`;
   selected.forEach((q, i) => {
     const aiChoice = personaAns[q.id];
     const aiOpt = q.options.find(o => o.label === aiChoice);
@@ -277,16 +278,15 @@ function submitStudy() {
   if (SUBMIT_ENDPOINT) {
     fetch(SUBMIT_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     }).catch(() => {});
+  } else {
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `response_${state.participantId.slice(0,8)}.json`;
+    a.click();
   }
-
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `response_${state.participantId.slice(0,8)}.json`;
-  a.click();
 
   nextScreen();
   document.getElementById("completion-code").textContent = code;
