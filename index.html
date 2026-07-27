@@ -226,14 +226,16 @@ function showPreferenceCheck() {
     <p class="note">Skip any question you don't have a strong opinion on.</p>`;
   selected.forEach((q, i) => {
     const aiChoice = personaAns[q.id];
-    const aiOpt = q.options.find(o => o.label === aiChoice);
-    const aiText = aiOpt ? aiOpt.text : aiChoice;
+    const optionsHtml = q.options.map(o => {
+      const isAI = o.label === aiChoice;
+      return `<div style="padding:8px 14px;margin-bottom:4px;border-radius:6px;font-size:0.95rem;${
+        isAI ? 'background:#e8ecff;border:1px solid #bac8ff;font-weight:600;' : 'color:#495057;'
+      }">(${o.label}) ${o.text}${isAI ? ' &larr; AI chose this' : ''}</div>`;
+    }).join("");
     html += `<div class="question-block">
       <div class="question-counter">${i+1} of ${selected.length}</div>
       <h3>${q.question}</h3>
-      <div style="background:#e8ecff;border-radius:6px;padding:10px 14px;margin-bottom:12px;">
-        AI chose: <strong>(${aiChoice}) ${aiText}</strong>
-      </div>
+      <div style="margin-bottom:12px;">${optionsHtml}</div>
       <label class="option" onclick="selectFeedback(this,'judge_${q.id}','agree')"><span class="option-label">Agree &mdash; I'd pick the same</span></label>
       <label class="option" onclick="selectFeedback(this,'judge_${q.id}','disagree')"><span class="option-label">Disagree &mdash; I'd choose differently</span></label>
       <label class="option" onclick="selectFeedback(this,'judge_${q.id}','no_opinion')"><span class="option-label">No strong opinion</span></label>
