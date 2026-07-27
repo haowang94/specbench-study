@@ -219,7 +219,8 @@ function showFeedback() {
   const candidates = proj.questions.filter(q => personaAns[q.id]);
   const selected = candidates.slice(0, 10);
   let html = `<h2>AI Preference Check</h2>
-    <p>We asked an AI to role-play a user with similar traits and answer the same design questions. Do you agree with its choices?</p>
+    <p>For the same project (<strong>${proj.label}</strong>), we asked an AI to role-play a user with similar traits and answer the same design questions. Do you agree with its choices?</p>
+    <div class="proposal-box">${proj.proposal}</div>
     <p class="note">Skip any question you don't have a strong opinion on.</p>`;
   selected.forEach((q, i) => {
     const aiChoice = personaAns[q.id];
