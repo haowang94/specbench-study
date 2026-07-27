@@ -150,37 +150,11 @@ proj.questions.forEach((q, i) => {
   `;
 });
 questionsHtml += `
-  <div class="btn-row"><button class="btn" onclick="nextScreen()">Continue</button></div>
+  <div class="btn-row"><button class="btn" onclick="showFeedback()">Continue</button></div>
 `;
 addScreen("questions", questionsHtml);
 
-addScreen("feedback", `
-  <h2>Almost Done</h2>
-
-  <div class="question-block">
-    <h3>If an AI assistant were building this project for you, how should it handle decisions you haven't discussed?</h3>
-    <label class="option" onclick="selectFeedback(this,'ai_collab','ask_everything')"><span class="option-label">Ask me about every decision before proceeding</span></label>
-    <label class="option" onclick="selectFeedback(this,'ai_collab','ask_important')"><span class="option-label">Ask only about the most important decisions, assume the rest</span></label>
-    <label class="option" onclick="selectFeedback(this,'ai_collab','show_draft')"><span class="option-label">Show me a draft plan and let me adjust what I disagree with</span></label>
-    <label class="option" onclick="selectFeedback(this,'ai_collab','just_build')"><span class="option-label">Just make reasonable choices and build it</span></label>
-  </div>
-
-  <div class="question-block">
-    <h3>Were these the kinds of decisions you'd actually think about when building this project?</h3>
-    <label class="option" onclick="selectFeedback(this,'relevance','yes')"><span class="option-label">Yes, these felt like real decisions I'd care about</span></label>
-    <label class="option" onclick="selectFeedback(this,'relevance','mostly')"><span class="option-label">Mostly, but some felt unimportant to me</span></label>
-    <label class="option" onclick="selectFeedback(this,'relevance','no')"><span class="option-label">Not really — I wouldn't think about most of these</span></label>
-  </div>
-
-  <div class="question-block">
-    <h3>How confident were you in your design choices?</h3>
-    <label class="option" onclick="selectFeedback(this,'confidence','strong')"><span class="option-label">I had clear preferences for most questions</span></label>
-    <label class="option" onclick="selectFeedback(this,'confidence','mixed')"><span class="option-label">Some I felt strongly about, others could go either way</span></label>
-    <label class="option" onclick="selectFeedback(this,'confidence','guessing')"><span class="option-label">I was mostly guessing — I don't have strong opinions on these</span></label>
-  </div>
-
-  <div class="btn-row"><button class="btn" onclick="submitStudy()">Submit</button></div>
-`);
+addScreen("feedback", ``);
 
 addScreen("thanks", `
   <h1>Thank you!</h1>
@@ -229,6 +203,47 @@ function selectFeedback(el, key, val) {
   state.feedback[key] = val;
 }
 
+function showFeedback() {
+  let bestPid = null, bestDist = 999;
+  for (const [pid, pt] of Object.entries(PERSONA_TRAITS)) {
+    let dist = 0;
+    for (const dim of ["experience","priorities","engagement","goal_clarity","collaboration"]) {
+      if (state.traits[dim] !== pt[dim]) dist++;
+    }
+    if (dist < bestDist) { bestDist = dist; bestPid = pid; }
+  }
+  state.closestPersona = bestPid;
+  state.closestDistance = bestDist;
+  const personaAns = (PERSONA_ANSWERS[bestPid] || {})[state.project] || {};
+  const proj = STUDY_DATA[state.project];
+  const candidates = proj.questions.filter(q => personaAns[q.id]);
+  const selected = candidates.slice(0, 3);
+  let html = `<h2>AI Preference Check</h2>
+    <p>We asked an AI to role-play a user with similar traits and answer the same design questions. Do you agree with its choices?</p>`;
+  selected.forEach((q, i) => {
+    const aiChoice = personaAns[q.id];
+    const aiOpt = q.options.find(o => o.label === aiChoice);
+    const aiText = aiOpt ? aiOpt.text : aiChoice;
+    html += `<div class="question-block">
+      <div class="question-counter">${i+1} of ${selected.length}</div>
+      <h3>${q.question}</h3>
+      <div style="background:#e8ecff;border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+        AI chose: <strong>(${aiChoice}) ${aiText}</strong>
+      </div>
+      <label class="option" onclick="selectFeedback(this,'judge_${q.id}','agree')"><span class="option-label">Agree — I'd pick the same</span></label>
+      <label class="option" onclick="selectFeedback(this,'judge_${q.id}','disagree')"><span class="option-label">Disagree — I'd choose differently</span></label>
+      <label class="option" onclick="selectFeedback(this,'judge_${q.id}','no_opinion')"><span class="option-label">No strong opinion</span></label>
+    </div>`;
+  });
+  if (selected.length === 0) {
+    html += `<p>No comparable AI responses available.</p>`;
+  }
+  html += `<div class="btn-row"><button class="btn" onclick="submitStudy()">Submit</button></div>`;
+  const idx = SCREENS.findIndex(s => s.id === "feedback");
+  if (idx >= 0) SCREENS[idx].html = html;
+  nextScreen();
+}
+
 function validateTraits() {
   const dims = ["experience", "priorities", "engagement", "goal_clarity", "collaboration"];
   const missing = dims.filter(d => !state.traits[d]);
@@ -253,6 +268,8 @@ function submitStudy() {
     project: state.project,
     answers: state.answers,
     feedback: state.feedback,
+    closest_persona: state.closestPersona || "",
+    closest_distance: state.closestDistance != null ? state.closestDistance : -1,
   };
 
   const code = "SPEC-" + state.participantId.slice(0, 8).toUpperCase();
